@@ -1,0 +1,73 @@
+version: '3.7'
+
+services:
+  redis-master-1:
+    image: bitnami/redis:7.0.9-debian-11-r1
+    container_name: redis-master-1
+    # volumes:
+    #   - "./.data:/data"
+    # ports:
+    #   - "6379:6379"
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    networks:
+      redis-sentinel:
+        ipv4_address: 172.19.0.2
+
+  redis-slave-1:
+    image: bitnami/redis:7.0.9-debian-11-r1
+    container_name: redis-slave-1
+    command: redis-server --slaveof redis-master-1 6379
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    # links:
+    #   - redis-master-1
+    # volumes:
+    #   - "./.data:/data"
+    networks:
+      redis-sentinel:
+        ipv4_address: 172.19.0.3
+
+  # Instance 1
+  redis-sentinel-1-1:
+    depends_on:
+      - redis-master-1
+      - redis-slave-1
+    container_name: redis-sentinel-1-1
+    build:
+      context: ./sentinel-1
+    networks:
+      redis-sentinel:
+        ipv4_address: 172.19.0.4
+
+  # Instance 2
+  redis-sentinel-1-2:
+    depends_on:
+      - redis-master-1
+      - redis-slave-1
+    container_name: redis-sentinel-1-2
+    build:
+      context: ./sentinel-1
+    networks:
+      redis-sentinel:
+        ipv4_address: 172.19.0.5
+
+  # Instance 3
+  redis-sentinel-1-3:
+    depends_on:
+      - redis-master-1
+      - redis-slave-1
+    container_name: redis-sentinel-1-3
+    build:
+      context: ./sentinel-1
+    networks:
+      redis-sentinel:
+        ipv4_address: 172.19.0.6
+
+networks:
+  redis-sentinel:
+    driver: bridge
+    ipam:
+     config:
+       - subnet: 172.19.0.0/16
+         gateway: 172.19.0.1

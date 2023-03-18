@@ -1,0 +1,62 @@
+version: '3.7'
+
+services:
+  redis-master-2:
+    depends_on:
+      - redis-sentinel-2-1
+    image: bitnami/redis:7.0.9-debian-11-r1
+    container_name: redis-master-2
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    networks:
+      redis-sentinel:
+        ipv4_address: 172.19.0.7
+
+  # Instance 1
+  redis-sentinel-2-1:
+    container_name: redis-sentinel-2-1
+    build:
+      context: ./sentinel-2
+    networks:
+      redis-sentinel:
+        ipv4_address: 172.19.0.9
+
+#  redis-slave-2:
+#    depends_on:
+#      - redis-sentinel-2-1
+#    image: redis:7.0.9-alpine
+#    container_name: redis-slave-2
+#    command: redis-server --slaveof redis-master-2 6379
+#    networks:
+#      redis-sentinel:
+#        ipv4_address: 172.19.0.8
+
+  # Instance 2
+  redis-sentinel-2-2:
+    depends_on:
+      - redis-sentinel-2-1
+    container_name: redis-sentinel-2-2
+    build:
+      context: ./sentinel-2
+    networks:
+      redis-sentinel:
+        ipv4_address: 172.19.0.10
+
+  # Instance 3
+  redis-sentinel-2-3:
+    depends_on:
+      - redis-sentinel-2-2
+    container_name: redis-sentinel-2-3
+    build:
+      context: ./sentinel-2
+    networks:
+      redis-sentinel:
+        ipv4_address: 172.19.0.11
+
+networks:
+  redis-sentinel:
+    driver: bridge
+    ipam:
+     config:
+       - subnet: 172.19.0.0/16
+         gateway: 172.19.0.1
